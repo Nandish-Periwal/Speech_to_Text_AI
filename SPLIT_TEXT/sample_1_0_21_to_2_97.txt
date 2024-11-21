@@ -1,0 +1,3 @@
+Start: 0.21s
+End: 2.97s
+Text: I broke up with Karen after the job interview. 

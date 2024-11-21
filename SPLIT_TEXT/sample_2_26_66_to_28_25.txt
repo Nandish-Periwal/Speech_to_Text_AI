@@ -1,0 +1,3 @@
+Start: 26.66s
+End: 28.25s
+Text: All they do is smile. 
