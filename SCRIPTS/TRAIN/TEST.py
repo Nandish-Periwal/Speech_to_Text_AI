@@ -6,11 +6,11 @@ from MODEL import SpeechToTextModel
  
 torch.set_printoptions(precision=4, sci_mode=False)
 
-audio_file_name = "sample_1_0_21_to_2_97.wav"
-audio_file_directory = Path(r"C:\Users\MyLaptopKart\Desktop\ai_practice\PROCESSED_AUDIO_DIR")
+audio_file_name = "sample_2_49_65_to_51_06.wav"
+audio_file_directory = Path(r"C:\Users\HP\Desktop\Speech_to_Text_AI\PROCESSED_AUDIO")
 audio_file_path = audio_file_directory / audio_file_name
-model_path = Path(r"")
-vocab_path = Path(r"C:\Users\MyLaptopKart\Desktop\Speech_to_Text_AI\vocab.json")
+model_path = Path(r"C:\Users\HP\Desktop\Speech_to_Text_AI\MODEL\SPEECH_TO_TEXT_MODEL_TRAINED.pth")
+vocab_path = Path(r"C:\Users\HP\Desktop\Speech_to_Text_AI\vocab.json")
 DECIMAL_PLACES = 4
 
 def extract_mfcc_from_audio (audio_file_path, n_mfcc=26) -> torch.Tensor:
@@ -77,13 +77,13 @@ def run_inference(audio_file_path, model_path, vocab_path):
         # print(f"Output dimension: {output.ndim}") # 2
         # print(f"Output shape: {output.shape}") # 759, 136 
         probabilities = torch.softmax(output, dim=1)
-        print("")
-        print(f"Probablities: {probabilities}")
+        # print("")
+        # print(f"Probablities: {probabilities}")
         max_probs, predicted_tokens = torch.max(probabilities, dim=1)
-        print("")
-        print(f"Predicted tokens: {predicted_tokens}")
-        print("")
-        print(f"max probs: {max_probs}")
+        # print("")
+        # print(f"Predicted tokens: {predicted_tokens}")
+        # print("")
+        # print(f"max probs: {max_probs}")
 
         threshold = 0.0
         predicted_tokens[max_probs < threshold] = 1
