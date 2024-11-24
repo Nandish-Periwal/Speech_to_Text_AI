@@ -6,7 +6,7 @@ from MODEL import SpeechToTextModel
  
 torch.set_printoptions(precision=4, sci_mode=False)
 
-audio_file_name = "sample_2_49_65_to_51_06.wav"
+audio_file_name = "sample_1_0_21_to_2_97.wav"
 audio_file_directory = Path(r"C:\Users\MyLaptopKart\Desktop\Speech_to_Text_AI\PROCESSED_AUDIO")
 audio_file_path = audio_file_directory / audio_file_name
 model_path = Path(r"C:\Users\MyLaptopKart\Desktop\Speech_to_Text_AI\MODEL\SPEECH_TO_TEXT_MODEL_TRAINED.pth")
