@@ -5,8 +5,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.data import DataLoader
-from DATASET import SpeechtoTextDataset
-from MODEL import SpeechToTextModel
+from SCRIPTS.TRAIN.DATASET import SpeechtoTextDataset
+from SCRIPTS.TRAIN.MODEL import SpeechToTextModel
 from pathlib import Path
 import torchaudio
 # import matplotlib.pyplot as plt
@@ -18,7 +18,7 @@ LEARNING_RATE = 0.01
 
 mfcc_dir = r"C:\Users\MyLaptopKart\Desktop\Speech_to_Text_AI\MFCC_FILES"
 text_dir = r"C:\Users\MyLaptopKart\Desktop\Speech_to_Text_AI\SPLIT_TEXT"
-model_dir = r"C:\Users\MyLaptopKart\Desktop\Speech_to_Text_AI\MODEL/" 
+model_dir = Path(r"C:\Users\MyLaptopKart\Desktop\Speech_to_Text_AI\MODEL") 
 if not os.path.exists(model_dir):
     os.makedirs(model_dir) 
 
@@ -111,7 +111,7 @@ def train(model, dataloader, criterion, optimizer, num_epochs):
                     print(f'Epoch [{epoch}/{num_epochs}], Loss: {train_losses[-1]:.4f}, Accuracy: {train_accuracies[-1]:.4f}')
 
     MODEL_NAME = "SPEECH_TO_TEXT_MODEL_TRAINED.pth"
-    MODEL_SAVE_PATH = r"D:\Coding\practice\MODEL\SPEECH_TO_TEXT_MODEL_TRAINED.pth"
+    MODEL_SAVE_PATH = model_dir / MODEL_NAME
 
     # print(f"Saving Model to: {MODEL_SAVE_PATH}")
     torch.save(obj=model.state_dict(), f=MODEL_SAVE_PATH)
