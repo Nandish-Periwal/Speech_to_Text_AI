@@ -2,10 +2,22 @@ import os
 import json
 import numpy as np
 import torch
-from torch.utils.data import  Dataset, DataLoader
+from torch.utils.data import  Dataset
 
 class SpeechtoTextDataset(Dataset):
     def __init__(self, mfcc_dir, text_dir, vocab_path=None, target_mfcc_length = 1380, target_text_length = 20, debug = False):
+        """
+        Initialize the dataset with MFCC and text directories, build or load the vocabulary.
+
+        Args:
+            mfcc_dir (str): Directory containing MFCC feature files.
+            text_dir (str): Directory containing corresponding text files.
+            vocab_path (str): Path to save/load vocabulary as a JSON file.
+            target_mfcc_length (int): Target length to pad/truncate MFCC features.
+            target_text_length (int): Target length to pad/truncate tokenized text.
+            debug (bool): If True, prints debug information during data loading.
+        """
+        
         self.mfcc_dir = mfcc_dir
         self.text_dir = text_dir
         self.mfcc_files = [f for f in os.listdir(self.mfcc_dir) if f.lower().endswith(".npy")]
@@ -13,10 +25,12 @@ class SpeechtoTextDataset(Dataset):
         vocab_path = r'C:\Users\MyLaptopKart\Desktop\Speech_to_Text_AI\vocab.json'
         self.vocab_path = vocab_path
 
+        # Ensure MFCC and text file counts match
         assert len(self.mfcc_files) == len(self.text_files), "Mismatch between MFCC and Text files count."
         print("")
         print(f"Found {len(self.mfcc_files)} MFCC files and {len(self.text_files)} text files.")
-
+        
+        # Load or build vocabulary
         self.vocab = self.load_or_build_vocab()
         self.output_size = len(self.vocab)
         print("")
@@ -29,13 +43,16 @@ class SpeechtoTextDataset(Dataset):
     def __len__(self):
         return len(self.mfcc_files)
 
+    # Extract the spoken text from a formatted text file.
     def extract_text_from_file(self, text:str):
+        
         lines = text.split("\n")
         for line in lines:
             if line.startswith("Text: "):
                 return line.replace("Text: ", "").strip()
         return ""
 
+    # Load an existing vocabulary or build a new one if not found.
     def load_or_build_vocab(self):
         if os.path.exists(self.vocab_path):
             with open (self.vocab_path, 'r') as f:
@@ -46,13 +63,13 @@ class SpeechtoTextDataset(Dataset):
             self.save_vocab(vocab)
         return vocab
     
-# saving the vocab (words) in a json file  
+    # Save the vocabulary to a JSON file.
     def save_vocab(self, vocab):
         with open(self.vocab_path, 'w') as f:
             json.dump(vocab, f)
             print(f"\nVocabulary saved to {self.vocab_path}.")  
-
-# update the vocab with any new words learned 
+ 
+    # Update the existing vocabulary with any new words.
     def update_vocab(self, vocab):
         with open(self.vocab_path, 'r') as f:
             existing_vocab = json.load(f)
@@ -63,7 +80,7 @@ class SpeechtoTextDataset(Dataset):
                 json.dump(existing_vocab, f)
             print("\nVocabulary updated with new words.")
 
-# storing each word in vocab, starting indexing from 2
+    # Build a vocabulary from the text files.
     def build_vocab(self):
         word_count = {}
         for text_file in self.text_files:
@@ -73,7 +90,7 @@ class SpeechtoTextDataset(Dataset):
                 words = spoken_text.lower().split()
                 for word in words:
                     word_count[word] = word_count.get(word,0) + 1 
-        vocab = {'<PAD>' : 0, '<UNK>' : 1 }
+        vocab = {'<PAD>' : 0, '<UNK>' : 1 } # <PAD> for padding, <UNK> for unknown words
         index  = 2
         for word, count in sorted(word_count.items(), key=lambda item: item[1], reverse = True):
             vocab[word] = index
@@ -81,14 +98,17 @@ class SpeechtoTextDataset(Dataset):
 
         return vocab
 
+    # Convert a word to its corresponding index.
     def word_to_index(self, word):
-        return self.vocab.get(word, self.vocab['<UNK>'])
+        return self.vocab.get(word, self.vocab['<UNK>']) # Default to <UNK> if word not in vocab
 
+    # Tokenize the input text and convert to indices.
     def tokenize_text(self, text:str):
         tokens = text.lower().split()
         token_indices = [self.word_to_index(token) for token in tokens]
         return token_indices
 
+    # Load and return the MFCC and tokenized text for a given index.
     def __getitem__(self, idx):
         mfcc_file = os.path.join(self.mfcc_dir, self.mfcc_files[idx])
         mfcc : np.ndarray = np.load(mfcc_file)
@@ -96,11 +116,11 @@ class SpeechtoTextDataset(Dataset):
             print(f"Loaded MFCC File {mfcc_file}; MFCC shape is {mfcc.shape}.")
 
         if mfcc.shape[0] == 2:
-            mfcc_reshaped = np.mean(mfcc , axis  =0)
+            mfcc_reshaped = np.mean(mfcc , axis=0)
         else:
             mfcc_reshaped = mfcc[0]
 
-        mfcc_reshaped = np.transpose(mfcc_reshaped, (1,0))
+        mfcc_reshaped = np.transpose(mfcc_reshaped, (1,0)) # Adjust MFCC shape for consistency
 
         mfcc_padded = self.pad_mfcc(mfcc_reshaped)
         if self.debug:
@@ -125,7 +145,7 @@ class SpeechtoTextDataset(Dataset):
 
         return torch.FloatTensor(mfcc_padded), torch.LongTensor(tokenized_text_padded)
 
-# padding mfcc files with 0s for consistent training
+    # Pad or truncate the MFCC array to the target length.
     def pad_mfcc (self, mfcc:np.ndarray):
         if (mfcc.shape[0] < self.target_mfcc_length):
             pad_width = self.target_mfcc_length - mfcc.shape[0]
@@ -135,7 +155,7 @@ class SpeechtoTextDataset(Dataset):
 
         return mfcc_padded
 
-# padding text files with 0s for consistent training
+    # Pad or truncate the tokenized text to the target length.
     def pad_text(self, tokenized_text):
         if len(tokenized_text) < self.target_text_length:
             tokenized_text_padded = tokenized_text + [self.vocab['<PAD>']] * (self.target_text_length - len(tokenized_text))
@@ -144,7 +164,7 @@ class SpeechtoTextDataset(Dataset):
 
         return tokenized_text_padded
 
-# decoding tokens into words for prediction
+    # Decode a list of token indices back into words.
     def decode(self, token_indices):
         index_to_word = {index: word for word, index in self.vocab.items()}
         decoded_words = [index_to_word.get(index, '') for index in token_indices if index != 0]
@@ -159,22 +179,6 @@ if __name__ == "__main__":
     dataset = SpeechtoTextDataset(mfcc_dir, text_dir, vocab_path, debug=True)
     print(f"Dataset size: {len(dataset)}")
 
-    # # Print the vocabulary
-    # print("\nVocabulary mapping (word to index):")
-    # for word, index in dataset.vocab.items():
-    #     print(f"  '{word}': {index}")
-
-    # # Creating DataLoader
-    # batch_size = 24
-    # dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
-
-    # for batch_idx, (mfcc_batch, token_batch) in enumerate(dataloader):
-    #     print(f"Batch {batch_idx + 1}:")
-    #     print(f"MFCC batch shape: {mfcc_batch.shape}")
-    #     print(f"Token batch shape: {token_batch.shape}")
-    #     print(f"First MFCC in batch: {mfcc_batch[0]}")
-    #     print(f"First tokenized text in batch: {token_batch[0]}")
-
     for idx in range(len(dataset)):
         mfcc, tokenized_text = dataset[idx]
-        print({f"MFCC Shape: {mfcc.shape}, Tokenized text: {tokenized_text}"})
+        print({f"MFCC Shape: {mfcc.shape}"})

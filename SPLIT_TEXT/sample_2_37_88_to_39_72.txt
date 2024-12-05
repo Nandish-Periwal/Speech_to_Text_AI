@@ -1,3 +1,0 @@
-Start: 37.88s
-End: 39.72s
-Text: Are you kidding me? 

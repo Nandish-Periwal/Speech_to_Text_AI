@@ -1,3 +1,0 @@
-Start: 36.72s
-End: 37.80s
-Text: It could be other things. 

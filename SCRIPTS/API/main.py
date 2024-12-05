@@ -25,5 +25,4 @@ async def captions(audio_file: UploadFile = File(...)):
     # Clean up the temporary file after processing
     temp_file_path.unlink()
 
-    # Return the generated caption
     return {"captions": caption}
